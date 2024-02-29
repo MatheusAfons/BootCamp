@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Entrega {
+  id        Int      @id @default(autoincrement())
+  endereco  String
+  status    String
+  pedidoId  String    // Alterado de Int para String
+  pedido   Pedido  @relation(fields: [pedidoId], references: [id])
+  nomeDestinatario String
+  dataDeEntrega DateTime
+  pontoDestino    String
+
+  @@map("entregas")
+}
+
+model Pedido {
+  id               String      @id @default(uuid())
+  status           String
+  usuarioId        String
+  usuario          Usuario     @relation(fields: [usuarioId], references: [id])
+  itens            ItemPedido[]
+  dataCriacao      DateTime    @default(now())
+  total            Float
+  enderecoEntrega  String?
+  metodoPagamento  String
+  observacoes      String?
+  entregas         Entrega[]   // Adiciona a relação oposta aqui
+
+  @@map("pedidos")
+}
+
+
+model ItemPedido {
+  id         String   @id @default(uuid())
+  pedidoId   String
+  produtoId  String
+  quantidade Int
+  preco      Float
+
+  pedido   Pedido   @relation(fields: [pedidoId], references: [id])
+  produto  Produto  @relation(fields: [produtoId], references: [id])
+
+  @@unique([pedidoId, produtoId])
+}
+
+model Produto {
+  id          String   @id @default(uuid())
+  nome        String
+  descricao   String?
+  preco       Float
+  categoriaId String?
+  Categoria   Categoria? @relation(fields: [categoriaId], references: [id])
+  itensPedido ItemPedido[]
+}
+
+model Usuario {
+  id        String    @id @default(uuid())
+  nome      String
+  email     String    @unique
+  telefone  String?
+  enderecos Endereco[]
+  pedidos   Pedido[]  // Adicionando campo de relação inversa
+}
+
+model Categoria {
+  id        String   @id @default(uuid())
+  nome      String
+  descricao String?
+  produtos  Produto[]
+}
+
+model Endereco {
+  id         String   @id @default(uuid())
+  rua        String
+  cidade     String
+  estado     String
+  cep        String
+  usuarioId  String
+  Usuario    Usuario  @relation(fields: [usuarioId], references: [id])
+}
+
+
+
